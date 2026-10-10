@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LabLeitor – Interpretação de Exames</title>
+<style>
+:root{--bg:#f4f7f9;--card:#fff;--tx:#14232b;--mut:#5b6b75;--bd:#d9e2e8;--pri:#0f766e;--ok:#15803d;--lo:#b45309;--hi:#b91c1c;--wn:#fff7e0;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1a20;--card:#17262e;--tx:#e6eef2;--mut:#9db0ba;--bd:#2a3f4a;--pri:#2dd4bf;--ok:#4ade80;--lo:#fbbf24;--hi:#f87171;--wn:#2b2713}}
+:root[data-theme="dark"]{--bg:#0f1a20;--card:#17262e;--tx:#e6eef2;--mut:#9db0ba;--bd:#2a3f4a;--pri:#2dd4bf;--ok:#4ade80;--lo:#fbbf24;--hi:#f87171;--wn:#2b2713}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:var(--pri);color:#fff;padding:14px 16px}
+@media (prefers-color-scheme:dark){header{color:#06231f}}
+header h1{margin:0;font-size:20px}header p{margin:2px 0 0;font-size:13px;opacity:.9}
+main{max-width:980px;margin:0 auto;padding:12px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:12px}
+.card h2{margin:0 0 10px;font-size:16px}
+.warn{background:var(--wn);border:1px solid var(--lo);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:12px}
+.row{display:flex;flex-wrap:wrap;gap:10px}.row>label{flex:1 1 180px;font-size:13px;color:var(--mut)}
+input,select{width:100%;padding:8px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+button,.btn{padding:9px 14px;border-radius:9px;border:1px solid var(--pri);background:var(--pri);color:#fff;font:inherit;font-weight:600;cursor:pointer}
+@media (prefers-color-scheme:dark){button,.btn{color:#06231f}}
+button.sec,.btn.sec{background:transparent;color:var(--pri)}button.dng{background:var(--hi);border-color:var(--hi);color:#fff}
+fieldset{border:1px solid var(--bd);border-radius:10px;margin:0 0 10px;padding:8px 10px}
+legend{font-weight:700;color:var(--pri);padding:0 6px}
+.it{display:grid;grid-template-columns:1.3fr 1fr auto;gap:8px;align-items:center;padding:4px 0;border-bottom:1px dashed var(--bd)}
+.it small{color:var(--mut);display:block}
+.chip{font-size:12px;font-weight:700;padding:2px 8px;border-radius:99px;border:1px solid currentColor;min-width:64px;text-align:center}
+.ok{color:var(--ok)}.lo{color:var(--lo)}.hi{color:var(--hi)}.nd{color:var(--mut)}
+#st{font-size:13px;color:var(--mut);margin-top:8px}.rt{width:100%;border-collapse:collapse}.rt td,.rt th{border-bottom:1px solid var(--bd);padding:5px 6px;text-align:left}
+.sum li{margin:4px 0}.tag{display:inline-block;background:var(--bg);border:1px solid var(--bd);border-radius:99px;padding:2px 10px;margin:2px;font-size:13px}
+#sheet{display:none;background:#fff;color:#111;width:210mm;min-height:297mm;margin:0 auto 20px;padding:16mm;box-shadow:0 2px 12px rgba(0,0,0,.25);font-size:12px;overflow-x:auto}
+#sheet h1{font-size:18px;margin:0;color:#0f766e}#sheet h3{font-size:13px;margin:12px 0 4px;border-bottom:1px solid #999}
+#sheet table{width:100%;border-collapse:collapse}#sheet td,#sheet th{border:1px solid #bbb;padding:3px 5px;text-align:left}
+#sheet .hi{color:#b91c1c}#sheet .lo{color:#b45309}#sheet .ok{color:#15803d}
+@media (max-width:600px){.it{grid-template-columns:1fr 1fr}.it .chip{grid-column:span 2}#sheet{width:100%;padding:10mm}}
+@page{size:A4;margin:12mm}
+@media print{body{background:#fff}header,main>*:not(#sheet),.noprint{display:none!important}#sheet{display:block!important;box-shadow:none;margin:0;width:auto;min-height:0;padding:0}}
+</style>
+</head>
+<body>
+<header><h1>🧪 LabLeitor</h1><p>Leitura e orientação inicial de resultados laboratoriais · protótipo v0.1</p></header>
+<main>
+<div class="warn"><b>Aviso:</b> ferramenta educativa. Não faz diagnóstico nem substitui avaliação profissional. Quando o laudo traz a faixa ou a sinalização do laboratório, o app usa essa referência; caso contrário aplica valores gerais para adultos. Dados ficam só nesta tela (não são salvos nem enviados).</div>
+
+<section class="card"><h2>1. Paciente</h2>
+<div class="row">
+<label>Nome<input id="nome" placeholder="Opcional"></label>
+<label>Data de nascimento<input id="nasc" type="date"></label>
+<label>Idade (anos)<input id="idade" type="number" min="0" max="120"></label>
+<label>Sexo<select id="sexo"><option value="F">Feminino</option><option value="M">Masculino</option></select></label>
+<label>Data da coleta<input id="data" type="date"></label>
+</div></section>
+
+<section class="card"><h2>2. Importar exame (PDF)</h2>
+<div class="btns"><button id="up">📄 Enviar PDF</button><input id="pdf" type="file" accept="application/pdf,.pdf" hidden>
+<button class="dng" id="limpar">🗑 Limpar dados</button></div>
+<div id="st">O PDF é lido no próprio navegador e os valores reconhecidos preenchem os campos abaixo. Confira sempre. PDFs escaneados (imagem) exigem digitação manual.</div></section>
+
+<section class="card"><h2>Alternativa: colar o texto do laudo</h2><textarea id="paste" rows="4" placeholder="Abra o PDF, selecione tudo (Ctrl+A), copie (Ctrl+C) e cole aqui" style="width:100%;padding:8px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit"></textarea><div class="btns" style="margin-top:8px"><button id="parse">🔍 Ler texto colado</button></div><div id="pst" style="font-size:13px;margin-top:8px;color:var(--mut)"></div><details style="margin-top:8px"><summary>Texto extraído do PDF (diagnóstico)</summary><pre id="dbg" style="white-space:pre-wrap;max-height:220px;overflow:auto;font-size:12px"></pre></details></section>
+<section class="card" id="resCard"><h2>Resultados do exame (dentro / fora da faixa)</h2><div id="res">Envie um PDF ou digite valores.</div></section>
+<section class="card"><h2>3. Resultados quantitativos (conferir / editar)</h2><div id="quant"></div></section>
+<section class="card"><h2>4. Exames qualitativos (urina, fezes, sorologias, outros)</h2><div id="qual"></div></section>
+
+<section class="card sum"><h2>5. Interpretação e encaminhamento</h2><div id="sum">Preencha ao menos um resultado.</div>
+<div class="btns" style="margin-top:10px"><button id="gerar">📋 Gerar relatório A4</button><button class="sec" id="print">🖨 Imprimir / Salvar PDF</button></div></section>
+
+<section id="sheet"></section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+<script>
+// [grupo, nome, unid, loM, hiM, loF, hiF, msgBaixo, msgAlto, especialidade, regex, tipoUnidade]
+const A=[
+["Hemograma","Hemoglobina","g/dL",13.5,17.5,12,15.5,"Sugere anemia: investigar ferro, B12/folato, perdas.","Hemoconcentração, tabagismo ou policitemia.","Hematologia / Clínica Médica / Nutrição","hemoglobina(?!\\s*(?:glic|corpuscular))|\\bhb\\b",""],
+["Hemograma","Hematócrito","%",41,53,36,46,"Compatível com anemia.","Hemoconcentração ou policitemia.","Hematologia","hemat[oó]crito|\\bht\\b",""],
+["Hemograma","Hemácias","milhões/mm³",4.5,5.9,4.1,5.1,"Baixa: compatível com anemia.","Alta: policitemia ou hemoconcentração.","Hematologia","hem[aá]cias|eritr[oó]citos","abs"],
+["Hemograma","VCM","fL",80,100,80,100,"Microcitose: pensar em deficiência de ferro ou talassemia.","Macrocitose: B12/folato, álcool, tireoide.","Hematologia / Nutrição","\\bvcm\\b|volume\\s*corpuscular\\s*m[eé]dio",""],
+["Hemograma","HCM","pg",27,32,27,32,"Baixo: comum na deficiência de ferro.","Alto: macrocitose (B12/folato).","Hematologia","\\bhcm\\b|(?<!de\\s)hemoglobina\\s*corpuscular\\s*m[eé]dia",""],
+["Hemograma","CHCM","g/dL",32,36,32,36,"Hipocromia: deficiência de ferro.","Alto: confirmar (artefatos, esferocitose).","Hematologia","\\bchcm\\b|conc\\S*\\s*(?:m[eé]dia\\s*)?de\\s*hemoglobina\\s*corpuscular\\s*m[eé]dia",""],
+["Hemograma","RDW","%",11.5,14.5,11.5,14.5,"—","Anisocitose: deficiência mista ou em evolução (ferro, B12/folato).","Hematologia","\\brdw(?:\\s*-?\\s*cv)?\\b|amplitude\\s*de\\s*distribui\\S*",""],
+["Hemograma","Leucócitos","/mm³",4000,11000,4000,11000,"Leucopenia: infecções virais, medicamentos, deficiências nutricionais, doenças da medula.","Leucocitose: infecção, inflamação, estresse ou corticoide.","Clínica Médica / Infectologia / Hematologia","leuc[oó]citos","abs"],
+["Hemograma","Neutrófilos (abs)","/mm³",1800,7000,1800,7000,"Neutropenia: maior risco de infecção; avaliar vírus, medicamentos, medula.","Neutrofilia: infecção bacteriana, inflamação, estresse, corticoide, tabagismo.","Hematologia / Infectologia / Clínica Médica","neutr[oó]filos?(?!\\s*(?:bast|jov))|segmentados","abs"],
+["Hemograma","Neutrófilos (%)","%",40,70,40,70,"Percentual baixo: interpretar com o valor absoluto.","Percentual alto: interpretar com o valor absoluto.","Hematologia / Clínica Médica","neutr[oó]filos?(?!\\s*(?:bast|jov))|segmentados","pct"],
+["Hemograma","Linfócitos (abs)","/mm³",1000,4800,1000,4800,"Linfopenia: infecções, medicamentos, imunossupressão.","Linfocitose: infecções virais; se persistente, Hematologia.","Hematologia / Infectologia","linf[oó]citos?(?!\\s*at[ií]picos)","abs"],
+["Hemograma","Linfócitos (%)","%",20,45,20,45,"Percentual baixo: interpretar com o valor absoluto.","Percentual alto: interpretar com o valor absoluto.","Hematologia / Clínica Médica","linf[oó]citos?(?!\\s*at[ií]picos)","pct"],
+["Hemograma","Monócitos (abs)","/mm³",200,1000,200,1000,"Monocitopenia: pouco específica.","Monocitose: infecções crônicas, recuperação, inflamação.","Hematologia / Clínica Médica","mon[oó]citos?","abs"],
+["Hemograma","Monócitos (%)","%",2,10,2,10,"Percentual baixo: pouco específico.","Percentual alto: interpretar com o valor absoluto.","Hematologia / Clínica Médica","mon[oó]citos?","pct"],
+["Hemograma","Eosinófilos (abs)","/mm³",null,500,null,500,"—","Eosinofilia: alergias, parasitoses, medicamentos.","Alergologia / Infectologia / Clínica Médica","eosin[oó]filos?","abs"],
+["Hemograma","Eosinófilos (%)","%",null,5,null,5,"—","Percentual alto: interpretar com o valor absoluto.","Alergologia / Clínica Médica","eosin[oó]filos?","pct"],
+["Hemograma","Basófilos (abs)","/mm³",null,200,null,200,"—","Basofilia: rara; se persistente, Hematologia.","Hematologia","bas[oó]filos?","abs"],
+["Hemograma","Basófilos (%)","%",null,1,null,1,"—","Percentual alto: se persistente, Hematologia.","Hematologia","bas[oó]filos?","pct"],
+["Hemograma","Plaquetas","/mm³",150000,450000,150000,450000,"Plaquetopenia: risco de sangramento; avaliar a causa.","Plaquetose: inflamação, deficiência de ferro, outras causas.","Hematologia","plaquetas","abs"],
+["Hemograma","VPM","fL",7.5,12.5,7.5,12.5,"Plaquetas pequenas: pouco específico.","Plaquetas grandes: pouco específico; interpretar com a contagem.","Hematologia","\\bvpm\\b|volume\\s*plaquet\\S*\\s*m[eé]dio",""],
+["Glicemia","Glicemia de jejum","mg/dL",70,99,70,99,"Hipoglicemia: investigar jejum prolongado e medicações.","Alterada (100–125 pré-diabetes; ≥126 sugere diabetes, confirmar).","Endocrinologia / Nutrição","glicemia(?!.*glic)|glicose",""],
+["Glicemia","Hemoglobina glicada","%",null,5.6,null,5.6,"—","5,7–6,4% pré-diabetes; ≥6,5% sugere diabetes (confirmar).","Endocrinologia / Nutrição","hemoglobina\\s*glic\\w*(?:\\s*\\(?\\s*hba1c\\s*\\)?)?|hba1c|a1c",""],
+["Perfil lipídico","Colesterol total","mg/dL",null,189,null,189,"—","Elevado: risco cardiovascular; avaliar dieta e fatores de risco.","Cardiologia / Nutrição","colesterol\\s*total",""],
+["Perfil lipídico","HDL","mg/dL",40,null,40,null,"HDL baixo: sedentarismo, tabagismo, dieta.","—","Cardiologia / Educação Física / Nutrição","\\bhdl\\b",""],
+["Perfil lipídico","LDL","mg/dL",null,129,null,129,"—","LDL elevado (a meta depende do risco individual).","Cardiologia / Nutrição","\\bldl\\b",""],
+["Perfil lipídico","Triglicerídeos","mg/dL",null,149,null,149,"—","Elevado: açúcar/álcool, resistência à insulina; acima de 500 há risco de pancreatite.","Cardiologia / Endocrinologia / Nutrição","triglic\\S*",""],
+["Função renal","Ureia","mg/dL",15,40,15,40,"Baixa: baixa ingestão proteica ou hepatopatia.","Elevada: desidratação, doença renal, dieta rica em proteína.","Nefrologia / Clínica Médica","ur[eé]ia",""],
+["Função renal","Creatinina","mg/dL",0.7,1.3,0.6,1.1,"Baixa: pouca massa muscular.","Elevada: possível redução da função renal; correlacionar com a TFG.","Nefrologia","creatinina",""],
+["Função renal","Ácido úrico","mg/dL",3.4,7.0,2.4,5.7,"Baixo: pouco relevante clinicamente.","Elevado: gota, dieta, função renal, síndrome metabólica.","Reumatologia / Nefrologia / Nutrição","[aá]cido\\s*[uú]rico|\\burato\\b",""],
+["Função hepática","TGO (AST)","U/L",null,40,null,40,"—","Elevada: fígado, músculo ou coração; avaliar álcool, medicações, esteatose.","Hepatologia / Gastroenterologia","tgo|\\bast\\b",""],
+["Função hepática","TGP (ALT)","U/L",null,41,null,33,"—","Elevada: lesão hepatocelular (esteatose, hepatites, medicações).","Hepatologia / Gastroenterologia","tgp|\\balt\\b",""],
+["Função hepática","Fosfatase alcalina","U/L",40,129,35,104,"Baixa: pouco comum; avaliar nutrição/zinco.","Elevada: vias biliares ou ossos.","Gastroenterologia","fosfatase\\s*alcalina",""],
+["Função hepática","Gama-GT","U/L",null,61,null,36,"—","Elevada: álcool, medicações, colestase, esteatose.","Hepatologia / Gastroenterologia","gama\\s*-?\\s*(?:glutamil\\s*transferase|gt)|ggt",""],
+["Função hepática","Bilirrubina total","mg/dL",0.3,1.2,0.3,1.2,"Baixa: sem relevância clínica.","Elevada: hemólise, doença hepática ou biliar, síndrome de Gilbert.","Gastroenterologia / Hepatologia","bilirrubina\\s*total",""],
+["Função hepática","Bilirrubina direta","mg/dL",null,0.3,null,0.3,"—","Elevada: colestase, obstrução biliar ou lesão hepatocelular.","Gastroenterologia / Hepatologia","bilirrubina\\s*direta",""],
+["Função hepática","Bilirrubina indireta","mg/dL",0.1,1.0,0.1,1.0,"—","Elevada: hemólise ou síndrome de Gilbert.","Gastroenterologia / Hepatologia","bilirrubina\\s*indireta",""],
+["Hormonais","TSH","mUI/L",0.4,4.0,0.4,4.0,"Baixo: possível hipertireoidismo.","Alto: possível hipotireoidismo.","Endocrinologia","\\btsh\\b|tireoestimulante",""],
+["Hormonais","T4 livre","ng/dL",0.8,1.8,0.8,1.8,"Baixo: hipotireoidismo.","Alto: hipertireoidismo.","Endocrinologia","t4\\s*livre|tiroxina\\s*livre",""],
+["Hormonais","Cortisol (manhã)","µg/dL",6,23,6,23,"Baixo: avaliar insuficiência adrenal.","Alto: estresse, medicações, síndrome de Cushing.","Endocrinologia","cortisol",""],
+["Hormonais","PSA total (homens)","ng/mL",null,4.0,null,4.0,"—","Elevado: não é diagnóstico de câncer; avaliar com urologista.","Urologia","\\bpsa\\b(?!\\s*livre)",""],
+["Vitaminas e minerais","Vitamina D","ng/mL",30,100,30,100,"Insuficiência/deficiência: sol, dieta, suplementação orientada.","Excesso: geralmente por suplementação.","Endocrinologia / Nutrição / Ortopedia","vitamina\\s*d|25\\s*-?\\s*oh",""],
+["Vitaminas e minerais","Vitamina B12","pg/mL",200,900,200,900,"Baixa: anemia, neuropatia; avaliar dieta e absorção.","Elevada: suplementos, fígado; correlacionar.","Clínica Médica / Nutrição / Neurologia","b\\s*12",""],
+["Vitaminas e minerais","Ferro sérico","µg/dL",65,175,50,170,"Baixo: carência ou perda crônica.","Alto: suplementação, hemocromatose.","Hematologia / Nutrição","ferro(?!\\s*s)|ferro\\s*s[eé]rico",""],
+["Vitaminas e minerais","Ferritina","ng/mL",30,400,15,150,"Baixa: deficiência de ferro.","Alta: inflamação, fígado ou sobrecarga de ferro.","Hematologia / Clínica Médica","ferritina",""],
+["Inflamação","PCR","mg/L",null,5,null,5,"—","Elevada: inflamação/infecção; correlacionar com sintomas.","Clínica Médica / Infectologia","pcr|prote[ií]na\\s*c",""],
+["Inflamação","VHS","mm/h",null,15,null,20,"—","Elevado: inflamação inespecífica.","Clínica Médica / Reumatologia","vhs",""]
+];
+const Q=[
+["Urina tipo I (EAS)","Nefrologia / Urologia / Clínica Médica"],["Urocultura","Urologia / Infectologia / Clínica Médica"],
+["Parasitológico de fezes","Infectologia / Gastroenterologia / Enfermagem"],["Sangue oculto nas fezes","Gastroenterologia / Coloproctologia"],
+["Coprocultura","Infectologia / Gastroenterologia"],["Sorologias (HIV, hepatites, sífilis, toxoplasmose, dengue)","Infectologia (pré-natal: Obstetrícia)"],
+["Papanicolau / citopatológico","Ginecologia"],["HPV (DNA)","Ginecologia / Infectologia"],
+["Teste do pezinho (triagem neonatal)","Pediatria / Genética médica / Nutrição"],["Genético / molecular / cariótipo","Genética médica"]
+];
+const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const sx=()=>$("#sexo").value,rg=a=>sx()=="M"?[a[3],a[4]]:[a[5],a[6]];
+const nf=n=>Number(n).toLocaleString("pt-BR",{maximumFractionDigits:2});
+const fmt=(l,h)=>l!=null&&h!=null?`${nf(l)}–${nf(h)}`:h!=null?`≤ ${nf(h)}`:`≥ ${nf(l)}`;
+const refTxt=a=>{const[l,h]=rg(a);return fmt(l,h)};
+const L={ok:"Normal",lo:"Baixo",hi:"Alto",nd:"—"};
+let LAB={};const hasR=o=>o&&(o.lo!=null||o.hi!=null);
+function flagI(i,v){if(v===""||v==null||isNaN(v))return null;const o=LAB[i];
+if(hasR(o))return o.lo!=null&&v<o.lo?"lo":o.hi!=null&&v>o.hi?"hi":"ok";
+if(o&&o.flag)return o.flag;const[l,h]=rg(A[i]);return l!=null&&v<l?"lo":h!=null&&v>h?"hi":"ok"}
+function refI(i){const o=LAB[i];if(hasR(o))return fmt(o.lo,o.hi)+" (laudo)";return refTxt(A[i])+(o&&o.flag?" · sinalização do laudo":"")}
+// ---------- interface ----------
+let g="",h="";A.forEach((a,i)=>{if(a[0]!=g){if(g)h+="</fieldset>";h+=`<fieldset><legend>${a[0]}</legend>`;g=a[0]}
+h+=`<div class="it"><div>${a[1]}<small class="rf" data-i="${i}"></small></div><input type="number" step="any" id="a${i}" placeholder="${a[2]}"><span class="chip nd" id="c${i}">—</span></div>`});
+$("#quant").innerHTML=h+"</fieldset>";
+$("#qual").innerHTML=Q.map((q,i)=>`<div class="it"><div>${q[0]}</div><select id="q${i}"><option value="">Não realizado</option><option value="n">Normal / Negativo</option><option value="a">Alterado / Positivo / Reagente</option></select><span class="chip nd" id="d${i}">—</span></div>`).join("");
+function refs(){document.querySelectorAll(".rf").forEach(e=>{const i=+e.dataset.i;e.textContent=`Ref.: ${refI(i)} ${A[i][2]}`})}
+function calc(){const r=[],q=[];A.forEach((a,i)=>{const v=parseFloat($("#a"+i).value),f=flagI(i,v),c=$("#c"+i);c.className="chip "+(f||"nd");c.textContent=L[f||"nd"];
+if(f){const o=LAB[i];r.push({n:a[1],v,u:a[2],ref:refI(i),f,m:f=="lo"?a[7]:f=="hi"?a[8]:"",s:a[9],lab:!!(o&&(hasR(o)||o.flag))})}});
+Q.forEach((x,i)=>{const v=$("#q"+i).value,c=$("#d"+i);c.className="chip "+(v=="a"?"hi":v=="n"?"ok":"nd");c.textContent=v=="a"?"Alterado":v=="n"?"Normal":"—";if(v)q.push({n:x[0],v,s:x[1]})});return{r,q}}
+function combos(r){const g=n=>r.find(x=>x.n==n),o=[],lc=g("Leucócitos"),nt=g("Neutrófilos (abs)"),hb=g("Hemoglobina"),vc=g("VCM");
+if(nt&&nt.f=="lo")o.push(`${lc&&lc.f=="lo"?"Leucopenia com neutropenia":"Neutropenia"} ${nt.v<500?"grave":nt.v<1000?"moderada":"leve"} (neutrófilos ${nf(nt.v)}/mm³): repetir o hemograma, revisar medicamentos e infecções recentes e procurar Hematologia ou Clínica Médica. Febre ou sinais de infecção exigem atendimento no mesmo dia.`);
+else if(lc&&lc.f=="lo")o.push("Leucopenia isolada: repetir o hemograma e avaliar causas virais, medicamentos e deficiências nutricionais.");
+if(hb&&hb.f=="lo"&&vc){if(vc.f=="lo")o.push("Anemia microcítica: investigar deficiência de ferro (ferritina, ferro, saturação) e talassemia.");else if(vc.f=="hi")o.push("Anemia macrocítica: investigar vitamina B12, folato, álcool, tireoide e medicamentos.");else o.push("Anemia normocítica: avaliar doença crônica, perda aguda, função renal e reticulócitos.")}
+if(vc&&vc.f=="lo"&&(!hb||hb.f=="ok"))o.push("VCM baixo com hemoglobina normal (microcitose sem anemia): avaliar ferritina e ferro; se persistir com ferro normal, considerar eletroforese de hemoglobina (talassemia).");
+return o}
+function renderRes(r,q){const e=$("#res");if(!r.length&&!q.length){e.textContent="Envie um PDF ou digite valores.";return}
+const ok=r.filter(x=>x.f=="ok").length,out=r.length-ok;
+e.innerHTML=`<p><b>${r.length}</b> resultado(s): <b class="ok">${ok} dentro</b> · <b class="${out?"hi":"ok"}">${out} fora</b> da faixa de referência.</p><div style="overflow-x:auto"><table class="rt"><tr><th>Exame</th><th>Resultado</th><th>Referência</th><th>Situação</th></tr>${r.map(x=>`<tr><td>${x.n}</td><td>${nf(x.v)} ${x.u}</td><td>${x.ref}</td><td class="${x.f}"><b>${x.f=="ok"?"✔ Dentro":x.f=="lo"?"▼ Abaixo":"▲ Acima"}</b></td></tr>`).join("")}</table></div>`}
+function summary(){const{r,q}=calc(),alt=r.filter(x=>x.f!="ok"),qa=q.filter(x=>x.v=="a"),cb=combos(r);renderRes(r,q);
+if(!r.length&&!q.length){$("#sum").textContent="Preencha ao menos um resultado.";return{r,q,alt,qa,sp:[],cb}}
+const sp=[...new Set([...alt.map(x=>x.s),...qa.map(x=>x.s)].join(" / ").split(" / "))].filter(Boolean);
+let t="";if(!alt.length&&!qa.length)t="<p class='ok'><b>Nenhuma alteração</b> nos resultados informados, em relação às referências usadas. Mantenha o acompanhamento de rotina.</p>";
+else t="<ul>"+alt.map(x=>`<li><b class="${x.f}">${x.n}: ${nf(x.v)} ${x.u} (${L[x.f]}${x.lab?", conforme o laudo":""})</b> — ${x.m}</li>`).join("")+qa.map(x=>`<li><b class="hi">${x.n}: alterado</b> — correlacionar com a clínica e repetir/confirmar conforme indicação.</li>`).join("")+"</ul>"+(cb.length?"<p><b>Observações combinadas:</b></p><ul>"+cb.map(x=>`<li>${x}</li>`).join("")+"</ul>":"")+"<p><b>Encaminhar para:</b> "+sp.map(s=>`<span class="tag">${s}</span>`).join("")+"</p>";
+$("#sum").innerHTML=t;return{r,q,alt,qa,sp,cb}}
+function sheet(){const s=summary(),d=$("#data").value;const dt=d?d.split("-").reverse().join("/"):"—";
+$("#sheet").innerHTML=`<h1>Relatório de Interpretação de Exames</h1><div>Emitido em ${new Date().toLocaleDateString("pt-BR")} · LabLeitor v0.1</div>
+<h3>Paciente</h3><div><b>Nome:</b> ${esc($("#nome").value||"—")} · <b>Nascimento:</b> ${$("#nasc").value?$("#nasc").value.split("-").reverse().join("/"):"—"} · <b>Idade:</b> ${esc($("#idade").value||"—")} · <b>Sexo:</b> ${sx()=="M"?"Masculino":"Feminino"} · <b>Coleta:</b> ${dt}</div>
+<h3>Resultados quantitativos</h3>${s.r.length?`<table><tr><th>Exame</th><th>Resultado</th><th>Referência</th><th>Situação</th></tr>${s.r.map(x=>`<tr><td>${x.n}</td><td>${nf(x.v)} ${x.u}</td><td>${x.ref}</td><td class="${x.f}"><b>${L[x.f]}</b></td></tr>`).join("")}</table><div style="font-size:10px;margin-top:3px">Referência do laudo quando indicada; caso contrário, valores gerais para adultos.</div>`:"<div>Nenhum informado.</div>"}
+<h3>Exames qualitativos</h3>${s.q.length?`<table>${s.q.map(x=>`<tr><td>${x.n}</td><td class="${x.v=="a"?"hi":"ok"}"><b>${x.v=="a"?"Alterado/Positivo":"Normal/Negativo"}</b></td></tr>`).join("")}</table>`:"<div>Nenhum informado.</div>"}
+<h3>Interpretação</h3>${s.alt.length||s.qa.length?"<ul>"+s.alt.map(x=>`<li><b>${x.n}</b> (${L[x.f]}): ${x.m}</li>`).join("")+s.qa.map(x=>`<li><b>${x.n}</b>: alterado; confirmar e correlacionar com a clínica.</li>`).join("")+s.cb.map(x=>`<li><i>${x}</i></li>`).join("")+"</ul>":"<div>Sem alterações nos itens informados.</div>"}
+<h3>Encaminhamento sugerido</h3><div>${s.sp.length?s.sp.join(" · "):"Acompanhamento de rotina."}</div>
+<h3>Aviso</h3><div style="font-size:11px">Documento educativo gerado automaticamente. Não constitui diagnóstico nem prescrição. A interpretação deve ser feita por profissional de saúde, considerando histórico, exame físico e valores de referência do laboratório.</div>`;
+$("#sheet").style.display="block";return s}
+function ageFrom(iso,ref){if(!iso)return null;const d=new Date(iso+"T00:00:00"),r=ref?new Date(ref+"T00:00:00"):new Date();if(isNaN(d)||d>r)return null;let a=r.getFullYear()-d.getFullYear();const m=r.getMonth()-d.getMonth();if(m<0||(m==0&&r.getDate()<d.getDate()))a--;return a}
+const isoD=(d,m,y)=>{d=+d;m=+m;y=+y;if(y<100)y+=y>(new Date().getFullYear()%100)?1900:2000;if(m<1||m>12||d<1||d>31||y<1900||y>2100)return null;return y+"-"+String(m).padStart(2,"0")+"-"+String(d).padStart(2,"0")};
+const titleC=s=>s!==s.toUpperCase()?s:s.toLowerCase().split(/\s+/).map((w,i)=>i&&["da","de","do","das","dos","e"].includes(w)?w:w.charAt(0).toUpperCase()+w.slice(1)).join(" ");
+const STOP=/laborat|exame|hemograma|resultado|cl[ií]nic|hospital|m[eé]dic|conv[eê]nio|solicitante|paciente|data|material|m[eé]todo|valores|refer|sangue|urina|diagn|an[aá]lises|carteira|crm|ltda|unidade|atendimento|pedido|laudo|p[aá]gina|bioqu|hemat|imuno|medicina|sa[uú]de|ficha|protocolo|setor|sexo|idade|nasc|g[eê]nero|cpf|\brg\b/i;
+function cleanName(s){s=(s||"").replace(/^\s*[\d.\-\/\s]*[-–:]\s*/,"").replace(/^\s*\d[\d.\-\/]*\s+/,"").trim();
+s=s.split(/\s+(?:sexo|g[eê]nero|idade|data|dt|nasc\w*|dn|cpf|rg|prontu\w*|conv\w*|m[eé]dico|solicitante|protocolo|registro|ficha|carteira|c[oó]d\w*|atendimento|masculino|feminino)\b|[\d:(\/]/i)[0].replace(/[\s\-–.]+$/,"").trim();
+return /^[A-Za-zÀ-ÿ'’.\- ]{5,80}$/.test(s)&&/\s/.test(s)&&!STOP.test(s)?s:null}
+function nameLabel(t){const head=t.slice(0,4000),re=/(?:nome\s+do\s+paciente|nome\s+completo|paciente|benefici[aá]rio|cliente|nome)[ \t]*[:\-]?[ \t]*([^\n]*)/gi;let m;
+while((m=re.exec(head))){const rest=head.slice(m.index+m[0].length).split("\n").filter(x=>x.trim());const s=m[1].trim();let n=s?cleanName(s):null;
+if(!n&&(!s||/^(?:sexo|idade|nasc\w*|data|dn|g[eê]nero)\b/i.test(s)))n=cleanName((rest[0]||"").trim());
+if(n)return n}return null}
+function nameNear(t){const L=t.split("\n").slice(0,80),k=L.findIndex(x=>/sexo|idade|nasc|\d\s*anos/i.test(x));if(k<0)return null;
+const ok=w=>/^[A-ZÀ-Ý]/.test(w)||/^(da|de|do|das|dos|e)$/i.test(w);
+for(let d=0;d<=10;d++)for(const i of d?[k-d,k+d]:[k]){if(i<0||i>=L.length)continue;const s=cleanName(L[i].trim());if(s&&s.split(/\s+/).every(ok))return s}return null}
+const DRE="(\\d{1,2})\\s*[\\/.\\-]\\s*(\\d{1,2})\\s*[\\/.\\-]\\s*(\\d{4}|\\d{2})\\b";
+const dateAfter=(t,kw)=>{const m=t.match(new RegExp("(?:"+kw+")[^\\d\\n]{0,40}"+DRE,"i"));return m?isoD(m[1],m[2],m[3]):null};
+const allDates=t=>{const re=/(\d{1,2})\s*[\/.\-]\s*(\d{1,2})\s*[\/.\-]\s*(\d{4})\b/g,s=t.slice(0,3000),o=[];let m;while((m=re.exec(s))){const d=isoD(m[1],m[2],m[3]);if(d)o.push(d)}return o};
+function readPatient(t){const got=[];
+const n1=nameLabel(t),nm=n1||nameNear(t);if(nm){$("#nome").value=titleC(nm);got.push(n1?"nome":"nome (conferir)")}
+const sx=t.match(/(?:sexo|g[eê]nero)\s*[:\-]?\s*(masculino|feminino|m|f)\b/i)||t.slice(0,1200).match(/\b(masculino|feminino)\b(?!\s*[:\-]|\s*\d+[,.]?\d*\s*(?:a|-|–)\s*\d)/i);
+if(sx){$("#sexo").value=/^m/i.test(sx[1])?"M":"F";got.push("sexo")}
+let cd=dateAfter(t,"colet\\w*|colhid\\w*")||dateAfter(t,"data\\s*(?:do|de)\\s*exame|realiza\\w*"),cap=false;if(!cd){cd=dateAfter(t,"atendimento|recebimento|cadastro|pedido|emiss\\S*|libera\\S*");cap=!!cd}if(cd){$("#data").value=cd;got.push(cap?"coleta (aprox.)":"coleta")}
+let ag=null;const am=t.match(/idade\s*[:\-]?\s*(\d{1,3})/i)||t.match(/(\d{1,3})\s*anos/i);if(am&&+am[1]<121)ag=+am[1];
+const ref=cd||$("#data").value||null;let nb=dateAfter(t,"nasc\\w*|\\bd\\.?n\\b");
+if(!nb){const ds=allDates(t);if(ag!=null)nb=ds.find(d=>{const a=ageFrom(d,ref);return a!=null&&a>=1&&Math.abs(a-ag)<=(ref?0:1)})||null;
+else if(ds.length&&(nm||sx)){const s=[...ds].sort()[0],a=ageFrom(s,ref);if(a!=null&&a>=1&&a<=120)nb=s}}
+if(nb){$("#nasc").value=nb;got.push("nascimento")}
+if(ag==null&&nb)ag=ageFrom(nb,ref);
+if(ag!=null){$("#idade").value=ag;got.push("idade")}
+window.__pt=got;window.__ms=["nome","sexo","nascimento","idade"].filter(x=>!got.some(g=>g.startsWith(x)))}
+const pinfo=()=>{const g=window.__pt||[],m=window.__ms||[];return (g.length?" Dados do paciente preenchidos: "+g.join(", ")+".":" Dados do paciente não encontrados no laudo.")+(m.length&&g.length?" Não encontrei: "+m.join(", ")+" (veja o cabeçalho lido abaixo).":"")};
+
+// ---------- leitura dos resultados ----------
+const U_PCT=/^\s*%/,U_ABS=/^\s*(?:(?:x\s*)?10\s*\^?\s*[³\d]+|mil\S*?)?\s*\/\s*(?:µ|μ|u|mm)/i,U_MIL=/^\s*(?:(?:x\s*)?10\s*\^?\s*[³3](?!\d)|mil(?![a-zõ]))/i,SZ=/^\s*(?:$|[^A-Za-zµμ%\/\s])/;
+const GLY={lo:/[↓⬇▼↘⇩]|arrow_downward|trending_down|\bsouth\b/i,hi:/[↑⬆▲↗⇧]|arrow_upward|trending_up|\bnorth\b/i,ok:/[✓✔☑]|check_circle|task_alt|\bcheck\b/i};
+const flagG=s=>GLY.lo.test(s)?"lo":GLY.hi.test(s)?"hi":GLY.ok.test(s)?"ok":null;
+function parseV(raw,abs){let s=raw.trim().replace(/[.,]+$/,"");if(/^[1-9]\d{0,2}(\.\d{3})+$/.test(s))s=s.replace(/\./g,"");else if(abs&&/^[1-9]\d{0,2}(,\d{3})+$/.test(s))s=s.replace(/,/g,"");else s=s.replace(",",".");return parseFloat(s)}
+function gbounds(a){const lo=[a[3],a[5]].filter(v=>v!=null),hi=[a[4],a[6]].filter(v=>v!=null);return[lo.length?Math.min(...lo)/20:0,hi.length?Math.max(...hi)*20:Math.max(...lo)*20]}
+function unitOk(u,hint){return hint=="pct"?U_PCT.test(u):hint=="abs"?U_ABS.test(u):true}
+function refFrom(s,a,abs,mult,hint){const[b0,b1]=gbounds(a),P=x=>{let v=parseV(x,abs);if(mult>1&&v<1000)v*=mult;return v},okv=v=>!isNaN(v)&&v>=b0&&v<=b1;
+const pick=c=>{const f=c.filter(x=>unitOk(x.u,hint)&&(hint?/\S/.test(x.u):true));return f[0]||(hint?c.find(x=>!/^\s*(?:%|\/)/.test(x.u)&&!/\S/.test(x.u)):c[0])||null};
+let rs=[],m,re=/(\d[\d.,]*)\s*(?:\s+(?:a|à|até)\s+|[-–—])\s*(\d[\d.,]*)[ \t]*(\S{0,12})/gi;
+while((m=re.exec(s))){const lo=P(m[1]),hi=P(m[2]);if(okv(lo)&&okv(hi)&&lo<hi)rs.push({lo,hi,u:m[3]||""})}
+let c=pick(rs);if(c)return{lo:c.lo,hi:c.hi};
+rs=[];re=/(?:até|ate|<=?|≤|inferior\s+a|menor\s+que)\s*(\d[\d.,]*)[ \t]*(\S{0,12})/gi;while((m=re.exec(s))){const hi=P(m[1]);if(okv(hi))rs.push({hi,u:m[2]||""})}
+c=pick(rs);if(c)return{hi:c.hi};
+rs=[];re=/(?:>=?|≥|superior\s+a|acima\s+de|maior\s+que)\s*(\d[\d.,]*)[ \t]*(\S{0,12})/gi;while((m=re.exec(s))){const lo=P(m[1]);if(okv(lo))rs.push({lo,u:m[2]||""})}
+c=pick(rs);return c?{lo:c.lo}:null}
+function evalSeg(seg,a,pass,ls,k0){const hint=a[11],abs=a[2]=="/mm³",re=/(?<![A-Za-zÀ-ÿ\d])\d[\d.,]*/g,[b0,b1]=gbounds(a);let tk,n=0;if(/^\s*[,;]/.test(seg))return null;
+while((tk=re.exec(seg))&&n++<4){const raw=tk[0],pre=seg.slice(0,tk.index),after=seg.slice(tk.index+raw.length);
+const strict=unitOk(after,hint),lenient=hint?SZ.test(after):true;if(pass==1?!strict:!(strict||lenient))continue;
+let v=parseV(raw,abs);if(isNaN(v))continue;const mil=abs&&U_MIL.test(after);
+if(abs&&v<1000&&(mil||(SZ.test(after)&&(a[1]=="Plaquetas"||(a[1]=="Leucócitos"&&v<100)))))v*=1000;
+if(hint=="pct"&&v>100)continue;if(v<b0||v>b1)continue;
+const mult=mil?1000:1;let ref=refFrom(after,a,abs,mult,hint);
+if(!ref&&ls){for(let k=k0+1,c=0;k<ls.length&&c<2;k++){const s3=ls[k].trim();if(!s3)continue;c++;if(/^(?:valores?\s*de\s*)?(?:refer\S*|ref\.?|vr)\b/i.test(s3)){ref=refFrom(s3,a,abs,mult,hint);break}}}
+const lab=Object.assign({},ref||{}),fl=flagG(pre)||flagG(after.slice(0,30));if(fl)lab.flag=fl;
+return{v,lab:(lab.lo!=null||lab.hi!=null||lab.flag)?lab:null}}return null}
+function cand(t,m,a,pass){const ls=t.slice(m.index+m[0].length).split("\n");let r=evalSeg(ls[0],a,pass,ls,0);if(r)return r;
+for(let k=1,c=0;k<ls.length&&c<3;k++){const s2=ls[k].trim();if(!s2)continue;c++;
+const mm=s2.match(/^(?:resultado\s*[:\-]?\s*)?([^\dA-Za-zÀ-ÿ\n]{0,6}[<>]?\s*\d.*)$/i);if(mm){r=evalSeg(mm[1],a,pass,ls,k);if(r)return r;break}}return null}
+function extract(t,a){const re=new RegExp("(?:"+a[10]+")","ig"),ms=[];let m;while((m=re.exec(t))&&ms.length<60)ms.push(m);
+for(const pass of[1,2])for(const x of ms){const c=cand(t,x,a,pass);if(c)return c}return null}
+function applyText(t){t=t.normalize("NFC").replace(/([a-zà-ÿ])[ \t](fi|fl|ff|ffi|ffl)[ \t]([a-zà-ÿ])/gi,"$1$2$3").replace(/25\s*-?\s*(oh|hidroxi\w*)/gi," ");LAB={};
+A.forEach((a,i)=>{$("#a"+i).value=""});
+readPatient(t);if(window.__ms.length){$("#dbg").textContent=t.split("\n").slice(0,30).join("\n");$("#dbg").closest("details").open=true}
+let n=0;A.forEach((a,i)=>{const r=extract(t,a);if(!r)return;$("#a"+i).value=r.v;if(r.lab)LAB[i]=r.lab;n++});
+refs();summary();if(n)$("#resCard").scrollIntoView({behavior:"smooth"});return n}
+// ---------- PDF ----------
+const W="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js",B="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/";
+function loadJs(u){return new Promise((ok,no)=>{const s=document.createElement("script");s.src=u;s.onload=ok;s.onerror=()=>no(new Error("falha ao carregar "+u));document.head.appendChild(s)})}
+const fixW=()=>{if(!window.pdfjsWorker&&window.WorkerMessageHandler)window.pdfjsWorker={WorkerMessageHandler:window.WorkerMessageHandler}};
+async function ensurePdf(){if(!window.pdfjsLib)await loadJs("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js").catch(()=>loadJs(B+"pdf.min.js"));
+fixW();if(!window.pdfjsWorker){await loadJs(W).catch(()=>loadJs(B+"pdf.worker.min.js"));fixW()}pdfjsLib.GlobalWorkerOptions.workerSrc=W}
+async function pdfText(f){const p=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;let t="";
+for(let i=1;i<=p.numPages;i++){const c=await(await p.getPage(i)).getTextContent();
+const its=c.items.filter(x=>x.str.trim()).map(x=>({x:x.transform[4],y:x.transform[5],w:x.width,h:x.height||Math.abs(x.transform[3])||10,s:x.str})).sort((a,b)=>b.y-a.y);
+let line=[],py=null;const flush=()=>{if(line.length){line.sort((a,b)=>a.x-b.x);let o="",pe=null;line.forEach(z=>{if(pe!==null){const gap=z.x-pe;o+=(z.w==null||gap>0.25*z.h)?" ":""}o+=z.s.trim();pe=z.w==null?z.x:z.x+z.w});t+=o+"\n"}line=[]};
+its.forEach(z=>{if(py!==null&&Math.abs(z.y-py)>3)flush();line.push(z);py=z.y});flush()}return t}
+$("#up").onclick=()=>$("#pdf").click();
+$("#pdf").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;const st=$("#st");
+try{st.textContent="Carregando leitor de PDF…";await ensurePdf();st.textContent="Lendo "+f.name+"…";
+const t=(await Promise.race([pdfText(f),new Promise((_,no)=>setTimeout(()=>no(new Error("tempo esgotado na leitura")),30000))])).normalize("NFC");
+$("#dbg").textContent=t.slice(0,4000);
+if(t.replace(/\s/g,"").length<30){st.textContent="Este PDF não tem texto selecionável (é imagem). Digite os valores manualmente.";return}
+const n=applyText(t);st.textContent=n?n+" valor(es) reconhecido(s) e preenchido(s)."+pinfo()+" Confira abaixo.":"Li o PDF ("+t.length+" caracteres), mas não reconheci exames."+pinfo()+" Abra \"Texto extraído\" abaixo."}
+catch(err){st.textContent="Falha na leitura: "+((err&&err.message)||err)+". Use a opção de colar o texto do laudo abaixo."}};
+$("#parse").onclick=()=>{const t=$("#paste").value,m=$("#pst");if(!t.trim()){m.textContent="Cole primeiro o texto do laudo na caixa acima.";return}
+const n=applyText(t);m.textContent=n?n+" valor(es) reconhecido(s)."+pinfo()+" Veja o quadro \"Resultados do exame\" acima e confira os campos.":"Nenhum exame reconhecido em "+t.split("\n").length+" linha(s). O texto precisa ter o nome do exame e o valor (ex.: Hemoglobina 13,5 g/dL).";$("#st").textContent=m.textContent};
+$("#limpar").onclick=()=>{const b=$("#limpar");if(!b.dataset.c){b.dataset.c=1;b.textContent="⚠ Clique de novo para confirmar";setTimeout(()=>{delete b.dataset.c;b.textContent="🗑 Limpar dados"},4000);return}
+delete b.dataset.c;b.textContent="🗑 Limpar dados";LAB={};$("#paste").value="";$("#dbg").textContent="";$("#pst").textContent="";
+document.querySelectorAll("input:not([type=file]),select").forEach(e=>e.value=e.id=="sexo"?"F":"");$("#sheet").style.display="none";$("#sheet").innerHTML="";$("#st").textContent="Dados apagados.";refs();summary()};
+$("#gerar").onclick=()=>{sheet();$("#sheet").scrollIntoView({behavior:"smooth"})};
+$("#print").onclick=()=>{sheet();setTimeout(()=>window.print(),150)};
+$("#nasc").addEventListener("input",()=>{const a=ageFrom($("#nasc").value,$("#data").value||null);if(a!=null)$("#idade").value=a});
+document.addEventListener("input",e=>{const m=/^a(\d+)$/.exec(e.target.id||"");if(m)delete LAB[+m[1]];refs();summary()});refs();
+
+</script>
+</body>
+</html>
