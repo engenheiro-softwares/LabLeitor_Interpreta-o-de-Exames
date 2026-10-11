@@ -195,13 +195,15 @@ const n1=nameLabel(t),nm=n1||nameNear(t);if(nm){$("#nome").value=titleC(nm);got.
 const sx=t.match(/(?:sexo|g[eê]nero)\s*[:\-]?\s*(masculino|feminino|m|f)\b/i)||t.slice(0,1200).match(/\b(masculino|feminino)\b(?!\s*[:\-]|\s*\d+[,.]?\d*\s*(?:a|-|–)\s*\d)/i);
 if(sx){$("#sexo").value=/^m/i.test(sx[1])?"M":"F";got.push("sexo")}
 let cd=dateAfter(t,"colet\\w*|colhid\\w*")||dateAfter(t,"data\\s*(?:do|de)\\s*exame|realiza\\w*"),cap=false;if(!cd){cd=dateAfter(t,"atendimento|recebimento|cadastro|pedido|emiss\\S*|libera\\S*");cap=!!cd}if(cd){$("#data").value=cd;got.push(cap?"coleta (aprox.)":"coleta")}
-let ag=null;const am=t.match(/idade\s*[:\-]?\s*(\d{1,3})/i)||t.match(/(\d{1,3})\s*anos/i);if(am&&+am[1]<121)ag=+am[1];
+let ag=null;const hd=t.slice(0,3000),am=hd.match(/(?<![A-Za-zÀ-ÿ])idade\s*[:\-]?\s*(\d{1,3})\b/i)||hd.match(/(?<![\d\/.,])(\d{1,3})\s*anos?\b/i)||t.match(/(?<![A-Za-zÀ-ÿ])idade\s*[:\-]?\s*(\d{1,3})\b/i)||t.match(/(?<![\d\/.,])(\d{1,3})\s*anos?\b/i)||hd.match(/(\d{2})\s*anos?\b/i);if(am&&+am[1]>0&&+am[1]<121)ag=+am[1];
 const ref=cd||$("#data").value||null;let nb=dateAfter(t,"nasc\\w*|\\bd\\.?n\\b");
 if(!nb){const ds=allDates(t);if(ag!=null)nb=ds.find(d=>{const a=ageFrom(d,ref);return a!=null&&a>=1&&Math.abs(a-ag)<=(ref?0:1)})||null;
 else if(ds.length&&(nm||sx)){const s=[...ds].sort()[0],a=ageFrom(s,ref);if(a!=null&&a>=1&&a<=120)nb=s}}
 if(nb){$("#nasc").value=nb;got.push("nascimento")}
-if(ag==null&&nb)ag=ageFrom(nb,ref);
-if(ag!=null){$("#idade").value=ag;got.push("idade")}
+const agN=nb?ageFrom(nb,ref):null;let calc=false;
+if(agN!=null&&(ag==null||(ref?Math.abs(ag-agN)>1:ag>agN+1))){ag=agN;calc=true}
+if(ag==null&&$("#nasc").value){const a2=ageFrom($("#nasc").value,ref);if(a2!=null){ag=a2;calc=true}}
+if(ag!=null){$("#idade").value=ag;got.push(calc?"idade (calculada)":"idade")}
 window.__pt=got;window.__ms=["nome","sexo","nascimento","idade"].filter(x=>!got.some(g=>g.startsWith(x)))}
 const pinfo=()=>{const g=window.__pt||[],m=window.__ms||[];return (g.length?" Dados do paciente preenchidos: "+g.join(", ")+".":" Dados do paciente não encontrados no laudo.")+(m.length&&g.length?" Não encontrei: "+m.join(", ")+" (veja o cabeçalho lido abaixo).":"")};
 
@@ -267,7 +269,8 @@ delete b.dataset.c;b.textContent="🗑 Limpar dados";LAB={};$("#paste").value=""
 document.querySelectorAll("input:not([type=file]),select").forEach(e=>e.value=e.id=="sexo"?"F":"");$("#sheet").style.display="none";$("#sheet").innerHTML="";$("#st").textContent="Dados apagados.";refs();summary()};
 $("#gerar").onclick=()=>{sheet();$("#sheet").scrollIntoView({behavior:"smooth"})};
 $("#print").onclick=()=>{sheet();setTimeout(()=>window.print(),150)};
-$("#nasc").addEventListener("input",()=>{const a=ageFrom($("#nasc").value,$("#data").value||null);if(a!=null)$("#idade").value=a});
+const recalcAge=()=>{const a=ageFrom($("#nasc").value,$("#data").value||null);if(a!=null)$("#idade").value=a};
+$("#nasc").addEventListener("input",recalcAge);$("#data").addEventListener("input",recalcAge);
 document.addEventListener("input",e=>{const m=/^a(\d+)$/.exec(e.target.id||"");if(m)delete LAB[+m[1]];refs();summary()});refs();
 
 </script>
